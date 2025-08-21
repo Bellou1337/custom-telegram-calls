@@ -1,6 +1,7 @@
 {
   "name": "custom-telegram-calls",
   "version": "1.0.0",
+  "type": "module",
   "scripts": {
     "dev": "tsx watch src/main.ts",
     "start": "tsx src/main.ts",
@@ -13,7 +14,13 @@
   "description": "",
   "devDependencies": {
     "@types/node": "^24.3.0",
+    "pino-pretty": "^13.1.1",
     "tsx": "^4.20.4",
     "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.1",
+    "grammy": "^1.38.1",
+    "pino": "^9.9.0"
   }
 }
