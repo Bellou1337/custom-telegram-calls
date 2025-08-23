@@ -1,10 +1,17 @@
 import Redis from "ioredis";
+import type { ExpirationType } from "../types";
 
 class RedisClient {
   private client: Redis;
-  private DEFAULT_EXPIRATION = 60 * 60 * 24; // 1 day
+
+  private EXPIRATION_TIMES: Record<ExpirationType, number> = {
+    DEFAULT: 60 * 60 * 24,
+    STATE: 60 * 60,
+  };
+
   REDIS_KEYS = {
-    FRIENDSHIP: (userId: number) => `friendship:${userId}`,
+    FRIENDSHIP: (userId: string) => `friendship:${userId}`,
+    USER_STATE: (userId: string) => `user_state:${userId}`,
   };
 
   constructor() {
@@ -14,8 +21,17 @@ class RedisClient {
     });
   }
 
-  async set(key: string, value: string): Promise<void> {
-    await this.client.set(key, value, "EX", this.DEFAULT_EXPIRATION);
+  async set(
+    key: string,
+    value: string,
+    expirationType: ExpirationType = "DEFAULT"
+  ): Promise<void> {
+    await this.client.set(
+      key,
+      value,
+      "EX",
+      this.EXPIRATION_TIMES[expirationType]
+    );
   }
 
   async get(key: string): Promise<string | null> {
