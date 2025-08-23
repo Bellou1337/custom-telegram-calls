@@ -7,8 +7,9 @@ import {
 import { M } from "../messages";
 import { logger } from "../lib";
 import { generateFriendshipKey } from "../utils";
+import { redisClient } from "../lib";
 
-export const generateMainMenu = (ctx: Context) => {
+export const generateMainMenu = async (ctx: Context) => {
   logger.info(`User ${ctx.from?.id} opened the profile menu`);
   ctx.answerCallbackQuery();
   ctx.editMessageText(M.PROFILE, {
@@ -17,9 +18,9 @@ export const generateMainMenu = (ctx: Context) => {
   });
 };
 
-export const backToProfile = (ctx: Context) => {
+export const backToProfile = async (ctx: Context) => {
   logger.info(`User ${ctx.from?.id} returned to profile`);
-  generateMainMenu(ctx);
+  await generateMainMenu(ctx);
 };
 
 export const setupUserProfileHandler = async (bot: Bot) => {
@@ -32,21 +33,31 @@ export const setupUserProfileHandler = async (bot: Bot) => {
     });
   });
 
-  bot.callbackQuery("understand", (ctx) => {
+  bot.callbackQuery("understand", async (ctx) => {
     generateMainMenu(ctx);
   });
-
-  bot.callbackQuery("get-friendship-key", (ctx) => {
+  bot.callbackQuery("get-friendship-key", async (ctx) => {
     logger.info(`User ${ctx.from?.id} requested friendship key`);
     ctx.answerCallbackQuery();
-    const friendshipKey = generateFriendshipKey();
+
+    const redisKey = redisClient.REDIS_KEYS.FRIENDSHIP(ctx.from?.id);
+    const redisData = await redisClient.get(redisKey);
+    let friendshipKey;
+
+    if (redisData) {
+      friendshipKey = redisData;
+    } else {
+      friendshipKey = generateFriendshipKey();
+      await redisClient.set(redisKey, friendshipKey);
+    }
+
     ctx.editMessageText(M.FRIENDSHIP_KEY(friendshipKey), {
       parse_mode: "HTML",
       reply_markup: friendshipKeyboard,
     });
   });
 
-  bot.callbackQuery("back_to_profile", (ctx) => {
-    backToProfile(ctx);
+  bot.callbackQuery("back_to_profile", async (ctx) => {
+    await backToProfile(ctx);
   });
 };

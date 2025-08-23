@@ -13,7 +13,7 @@ export const setupStartHandler = async (bot: Bot) => {
     });
   });
 
-  bot.callbackQuery("start", (ctx) => {
-    generateMainMenu(ctx);
+  bot.callbackQuery("start", async (ctx) => {
+    await generateMainMenu(ctx);
   });
 };
