@@ -16,7 +16,6 @@ enum UserStatus {
 enum FriendshipStatus {
     PENDING
     ACCEPTED
-    REJECTED
 }
 
 model User {
@@ -41,6 +40,8 @@ model FriendshipRequest {
 model Friendship {
     id String @id @default(uuid())
     initiatorTelegramId String
+    initiatorUsername String
+    recipientUsername String
     recipientTelegramId String
     initiator User @relation("InitiatorFriendships", fields: [initiatorTelegramId], references: [telegramId])
     recipient User @relation("RecipientFriendships", fields: [recipientTelegramId], references: [telegramId])

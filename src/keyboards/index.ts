@@ -1,7 +1,11 @@
 export { startKeyboard } from "./start-keyboard";
 export { userProfileKeyboard } from "./user-profile-keyboard";
 export { howItWorksKeyboard } from "./how-it-works-keyboard";
-export { userFriendsKeyboard, backToFriendList } from "./user-friends-keyboard";
+export {
+  userFriendsKeyboard,
+  backToFriendList,
+  getFriendRequestDecisionKeyboard,
+} from "./user-friends-keyboard";
 
 import { InlineKeyboard } from "grammy";
 

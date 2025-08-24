@@ -1,6 +1,7 @@
 import { prisma } from "../database";
 import type { CreateUser, UserWithFriends } from "../types/user-types";
 import { logger } from "../lib";
+import { redisClient } from "../lib";
 
 class UserService {
   createUser = async (user: CreateUser): Promise<void> => {
@@ -21,6 +22,14 @@ class UserService {
   getUserFriends = async (
     userTelegramId: string
   ): Promise<UserWithFriends | null> => {
+    const redisData = (await redisClient.getFriendList(
+      redisClient.REDIS_KEYS.USER_FRIEND_LIST(userTelegramId)
+    )) as UserWithFriends | null;
+
+    if (redisData) {
+      return redisData;
+    }
+
     return await prisma.user.findUnique({
       where: { telegramId: userTelegramId },
       include: { initiatedFriendships: true, receivedFriendships: true },

@@ -1,3 +1,10 @@
-export type { CreateUser } from "./user-types";
-export type { Friendship } from "./friendship-types";
-export type { ExpirationType } from "./redis-types";
+export type { CreateUser, UserWithFriends } from "./user-types";
+export type {
+  Friendship,
+  FriendshipRequest,
+  FriendshipRequestDb,
+  RemoveFriendship,
+} from "./friendship-types";
+export type { ExpirationType, FriendshipUpdate } from "./redis-types";
+export type { UserState } from "./state-types";
+export type { Friend, UserFriends } from "./friends-paginator-types";

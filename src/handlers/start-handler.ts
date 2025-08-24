@@ -10,20 +10,22 @@ import { STATES } from "../lib";
 
 export const setupStartHandler = async (bot: Bot) => {
   bot.command("start", async (ctx) => {
-    const currentState = await redisClient.get(
+    const currentState = await redisClient.getState(
       redisClient.REDIS_KEYS.USER_STATE(String(ctx.from?.id))
     );
 
-    if (currentState === STATES.FRIEND_ADD) {
+    if (currentState?.state === STATES.FRIEND_ADD) {
       return;
     }
 
     logger.info(`User ${ctx.from?.id} started the bot`);
     logger.info(`Set state ${STATES.START} for ${ctx.from?.id}`);
 
-    redisClient.set(
+    redisClient.setState(
       redisClient.REDIS_KEYS.USER_STATE(String(ctx.from?.id)),
-      STATES.START,
+      {
+        state: STATES.START,
+      },
       "STATE"
     );
 
