@@ -1,0 +1,49 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserStatus {
+    ACTIVE
+    BUSY
+}
+
+enum FriendshipStatus {
+    PENDING
+    ACCEPTED
+}
+
+model User {
+    id String @id @default(uuid())
+    telegramId String @unique
+    telegramUsername String
+    userStatus UserStatus @default(ACTIVE)
+    createdAt DateTime @default(now())
+    initiatedFriendships Friendship[] @relation("InitiatorFriendships")
+    receivedFriendships Friendship[] @relation("RecipientFriendships")
+}
+
+model FriendshipRequest {
+    id String @id @default(uuid())
+    fromTelegramId String
+    toTelegramId String
+    status FriendshipStatus @default(PENDING)
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+model Friendship {
+    id String @id @default(uuid())
+    initiatorTelegramId String
+    initiatorUsername String
+    recipientUsername String
+    recipientTelegramId String
+    initiator User @relation("InitiatorFriendships", fields: [initiatorTelegramId], references: [telegramId])
+    recipient User @relation("RecipientFriendships", fields: [recipientTelegramId], references: [telegramId])
+    createdAt DateTime @default(now())
+}

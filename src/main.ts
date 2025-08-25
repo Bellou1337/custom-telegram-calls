@@ -6,6 +6,10 @@ import { setupHandlers } from "./handlers";
 
 export const bot = new Bot(process.env.BOT_TOKEN!);
 
+bot.catch((err) => {
+  logger.error(`Global error: ${(err as Error).message}`);
+});
+
 const startPolling = async () => {
   try {
     // await bot.api.sendMessage(process.env.OWNER_ID!, M.BOT_STARTED);
