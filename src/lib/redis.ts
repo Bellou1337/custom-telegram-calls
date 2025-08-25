@@ -1,4 +1,5 @@
 import Redis from "ioredis";
+import { prisma } from "../database";
 import type { ExpirationType, UserState, UserWithFriends } from "../types";
 
 class RedisClient {
@@ -76,8 +77,36 @@ class RedisClient {
     );
   }
 
-  async removeFriendList(key: string): Promise<void> {
-    await this.client.del(key);
+  async updateFriendList(fromTelegramId: string, toTelegramId: string) {
+    const initiatorFriends = await prisma.user.findUnique({
+      where: {
+        telegramId: fromTelegramId,
+      },
+      include: {
+        initiatedFriendships: true,
+        receivedFriendships: true,
+      },
+    });
+
+    const recipientFriends = await prisma.user.findUnique({
+      where: {
+        telegramId: toTelegramId,
+      },
+      include: {
+        initiatedFriendships: true,
+        receivedFriendships: true,
+      },
+    });
+
+    await this.setFriendList(
+      this.REDIS_KEYS.USER_FRIEND_LIST(fromTelegramId),
+      initiatorFriends
+    );
+
+    await this.setFriendList(
+      this.REDIS_KEYS.USER_FRIEND_LIST(toTelegramId),
+      recipientFriends
+    );
   }
 }
 

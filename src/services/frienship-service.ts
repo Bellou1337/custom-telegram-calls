@@ -52,21 +52,9 @@ class FriendshipService {
       },
     });
 
-    const initiatorFriends = await userService.getUserFriends(
-      friendshipData.fromTelegramId
-    );
-    const recipientFriends = await userService.getUserFriends(
+    await redisClient.updateFriendList(
+      friendshipData.fromTelegramId,
       friendshipData.toTelegramId
-    );
-
-    await redisClient.setFriendList(
-      redisClient.REDIS_KEYS.USER_FRIEND_LIST(friendshipData.fromTelegramId),
-      initiatorFriends
-    );
-
-    await redisClient.setFriendList(
-      redisClient.REDIS_KEYS.USER_FRIEND_LIST(friendshipData.toTelegramId),
-      recipientFriends
     );
   }
 
@@ -112,14 +100,6 @@ class FriendshipService {
       },
     });
 
-    await redisClient.removeFriendList(
-      redisClient.REDIS_KEYS.USER_FRIEND_LIST(friendshipData.fromTelegramId)
-    );
-
-    await redisClient.removeFriendList(
-      redisClient.REDIS_KEYS.USER_FRIEND_LIST(friendshipData.toTelegramId)
-    );
-
     const friendship = await prisma.friendship.findFirst({
       where: {
         OR: [
@@ -141,21 +121,28 @@ class FriendshipService {
       },
     });
 
-    const initiatorFriends = await userService.getUserFriends(
-      friendshipData.fromTelegramId
-    );
-    const recipientFriends = await userService.getUserFriends(
+    await redisClient.updateFriendList(
+      friendshipData.fromTelegramId,
       friendshipData.toTelegramId
     );
+  }
 
-    await redisClient.setFriendList(
-      redisClient.REDIS_KEYS.USER_FRIEND_LIST(friendshipData.fromTelegramId),
-      initiatorFriends
-    );
-    await redisClient.setFriendList(
-      redisClient.REDIS_KEYS.USER_FRIEND_LIST(friendshipData.toTelegramId),
-      recipientFriends
-    );
+  async declineFriendshipRequest(
+    fromTelegramId: string,
+    toTelegramId: string
+  ): Promise<void> {
+    const friendshipRq = await prisma.friendshipRequest.findFirst({
+      where: {
+        fromTelegramId: fromTelegramId,
+        toTelegramId: toTelegramId,
+      },
+    });
+
+    await prisma.friendshipRequest.delete({
+      where: {
+        id: friendshipRq?.id!,
+      },
+    });
   }
 }
 

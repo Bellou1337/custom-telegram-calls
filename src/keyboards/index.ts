@@ -6,6 +6,7 @@ export {
   backToFriendList,
   getFriendRequestDecisionKeyboard,
 } from "./user-friends-keyboard";
+export { notifyOkKeyboard } from "./notify-keyboard";
 
 import { InlineKeyboard } from "grammy";
 

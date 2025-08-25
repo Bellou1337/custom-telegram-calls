@@ -1,19 +1,48 @@
-import { Bot } from "grammy";
+import { Bot, Context } from "grammy";
 import { M } from "../messages";
 import {
   backToFriendList,
   getFriendRequestDecisionKeyboard,
+  notifyOkKeyboard,
 } from "../keyboards";
 import { redisClient, STATES, generatePaginator, logger } from "../lib";
-import {
-  NotifyService,
-  friendshipService,
-  userService,
-  FriendsPaginator,
-} from "../services";
+import { NotifyService, friendshipService } from "../services";
 import { generateMainMenu, generateFriendsMenu } from "./user-profile-handler";
 import { deleteMessage, getUsername } from "../utils";
 import type { FriendshipRequest } from "../types";
+
+export const generateFriendsRemoveMenu = async (
+  ctx: Context,
+  isEditMessage: boolean = true
+) => {
+  logger.info(`User ${ctx.from?.id} wants to remove friend`);
+
+  if (ctx.callbackQuery) {
+    await ctx.answerCallbackQuery();
+  }
+
+  logger.info(`Set state FRIEND_REMOVE for user ${ctx.from?.id}`);
+  await redisClient.setState(
+    redisClient.REDIS_KEYS.USER_STATE(String(ctx.from?.id)),
+    STATES.FRIEND_REMOVE
+  );
+
+  const paginator = await generatePaginator(ctx);
+  paginator.setPage(1);
+
+  if (isEditMessage) {
+    await ctx.editMessageText(paginator.renderRemovePage(), {
+      parse_mode: "HTML",
+      reply_markup: paginator.getRemoveKeyboard(),
+    });
+    return;
+  }
+
+  await ctx.reply(paginator.renderRemovePage(), {
+    parse_mode: "HTML",
+    reply_markup: paginator.getRemoveKeyboard(),
+  });
+};
 
 export const setupUserFriendsHandler = async (bot: Bot) => {
   const notifyService = new NotifyService(bot);
@@ -180,14 +209,48 @@ export const setupUserFriendsHandler = async (bot: Bot) => {
 
     logger.info(`Notifying users about accepted friendship`);
 
+    logger.info(`Notify user ${fromId} about accepted friendship`);
+    await notifyService.notifyUser(
+      fromId?.toString()!,
+      M.FRIENDSHIP_REQUEST_ACCEPTED_NOTIFICATION(toUsername || ""),
+      notifyOkKeyboard
+    );
+
+    logger.info(`Notify user ${toId} about accepted friendship`);
     await ctx.answerCallbackQuery({
       text: M.FRIENDSHIP_REQUEST_ACCEPTED,
       show_alert: true,
     });
 
     await ctx.deleteMessage();
+  });
 
-    // TODO: уведомление для пользователя который присылал заявку
+  bot.callbackQuery(/^decline-friend-(\d+)-(\d+)$/, async (ctx) => {
+    const fromId = ctx.match[1];
+    const toId = ctx.match[2];
+
+    logger.info(`User ${toId} declined friendship request from ${fromId}`);
+
+    await friendshipService.declineFriendshipRequest(
+      fromId!.toString(),
+      toId!.toString()
+    );
+
+    logger.info(`Notifying user ${fromId} about declined friendship`);
+
+    const toUsername = await getUsername(toId!.toString()!);
+
+    await notifyService.notifyUser(
+      fromId!.toString(),
+      M.FRIENDSHIP_REQUEST_DECLINED_NOTIFICATION(toUsername || ""),
+      notifyOkKeyboard
+    );
+
+    await ctx.answerCallbackQuery({
+      text: M.FRIENDSHIP_REQUEST_DECLINED,
+      show_alert: true,
+    });
+    await ctx.deleteMessage();
   });
 
   bot.callbackQuery(/^friends_page_(\d+)$/, async (ctx) => {
@@ -208,6 +271,32 @@ export const setupUserFriendsHandler = async (bot: Bot) => {
     const friendId = ctx.match[1];
     logger.info(`User ${ctx.from?.id} requested to remove friend ${friendId}`);
 
+    logger.info(
+      `Check existing friendship for user ${ctx.from?.id} and ${friendId}`
+    );
+
+    const fromUsername = await getUsername(ctx.from?.id!.toString()!);
+    const toUsername = await getUsername(friendId?.toString()!);
+
+    const existingFriendship = await friendshipService.checkExistingFriendship({
+      fromTelegramId: ctx.from?.id!.toString()!,
+      toTelegramId: friendId?.toString()!,
+      fromUsername: fromUsername,
+      toUsername: toUsername,
+    });
+
+    if (!existingFriendship) {
+      logger.info(
+        `No existing friendship found for user ${ctx.from?.id} and ${friendId}`
+      );
+      await ctx.deleteMessage();
+      await ctx.reply(M.FRIENDSHIP_REMOVE_ERROR, {
+        parse_mode: "HTML",
+      });
+      await generateFriendsRemoveMenu(ctx, false);
+      return;
+    }
+
     logger.info(`Removing friend ${friendId}`);
     await friendshipService.removeFriend({
       fromTelegramId: ctx.from?.id!.toString(),
@@ -226,6 +315,14 @@ export const setupUserFriendsHandler = async (bot: Bot) => {
     const paginator = await generatePaginator(ctx);
     paginator.setPage(1);
 
+    logger.info(`Notifying user ${friendId} about being removed as a friend`);
+
+    await notifyService.notifyUser(
+      friendId?.toString()!,
+      M.FRIEND_REMOVED_NOTIFICATION(fromUsername),
+      notifyOkKeyboard
+    );
+
     await ctx.editMessageText(paginator.renderRemovePage(), {
       parse_mode: "HTML",
       reply_markup: paginator.getRemoveKeyboard(),
@@ -233,25 +330,7 @@ export const setupUserFriendsHandler = async (bot: Bot) => {
   });
 
   bot.callbackQuery("remove-friend", async (ctx) => {
-    logger.info(`User ${ctx.from?.id} wants to remove friend`);
-
-    await ctx.answerCallbackQuery();
-
-    logger.info(`Set state FRIEND_REMOVE for user ${ctx.from?.id}`);
-    await redisClient.setState(
-      redisClient.REDIS_KEYS.USER_STATE(String(ctx.from?.id)),
-      STATES.FRIEND_REMOVE
-    );
-
-    const paginator = await generatePaginator(ctx);
-    paginator.setPage(1);
-
-    await ctx.editMessageText(paginator.renderRemovePage(), {
-      parse_mode: "HTML",
-      reply_markup: paginator.getRemoveKeyboard(),
-    });
-
-    // TODO: уведомление для пользователя которого удалили
+    await generateFriendsRemoveMenu(ctx);
   });
 
   bot.callbackQuery(/^remove_friends_page_(\d+)$/, async (ctx) => {

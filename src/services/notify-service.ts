@@ -6,6 +6,11 @@ export class NotifyService {
 
   constructor(bot: Bot) {
     this.bot = bot;
+
+    this.bot.callbackQuery("notify-ok", async (ctx) => {
+      await ctx.answerCallbackQuery();
+      await ctx.deleteMessage();
+    });
   }
 
   async notifyUser(
