@@ -15,12 +15,15 @@
     "dev": "tsx watch main.ts",
     "start": "tsx main.ts",
     "build": "tsc",
-    "migrate:dev": "npx prisma migrate dev --schema=../database/prisma/schema.prisma --name",
-    "migrate:deploy": "npx prisma migrate deploy --schema=../database/prisma/schema.prisma --name",
-    "generate:prisma": "npx prisma generate --schema=../database/prisma/schema.prisma"
+    "migrate:dev": "dotenv -e ../../.env -- npx prisma migrate dev --schema=../database/prisma/schema.prisma --name",
+    "migrate:deploy": "dotenv -e ../../.env -- npx prisma migrate deploy --schema=../database/prisma/schema.prisma --name",
+    "generate:prisma": "dotenv -e ../../.env -- npx prisma generate --schema=../database/prisma/schema.prisma"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": ""
+  "description": "",
+  "devDependencies": {
+    "dotenv-cli": "^10.0.0"
+  }
 }
