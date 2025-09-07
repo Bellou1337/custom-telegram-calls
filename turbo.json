@@ -1,0 +1,9 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "ui": "tui",
+  "tasks": {
+    "dev": { "cache": false, "persistent": true },
+    "build": { "dependsOn": ["^build"], "outputs": ["dist/**"] }
+  },
+  "globalEnv": ["DATABASE_URL", "REDIS_URL", "KAFKA_BROKERCONNECT"]
+}

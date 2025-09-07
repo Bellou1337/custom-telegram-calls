@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "rootDir": "apps",
+    "rootDir": ".",
     "outDir": "./dist",
 
     "module": "esnext",
@@ -22,6 +22,6 @@
     "moduleResolution": "node",
     "skipLibCheck": true
   },
-  "include": ["apps/**/*.ts"],
+  "include": ["**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }

@@ -1,0 +1,26 @@
+{
+  "name": "@app/bot",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "main": "./main.ts",
+  "directories": {
+    "lib": "lib"
+  },
+  "dependencies": {
+    "@app/database": "file:../database",
+    "@app/kafka": "file:../kafka"
+  },
+  "scripts": {
+    "dev": "tsx watch main.ts",
+    "start": "tsx main.ts",
+    "build": "tsc",
+    "migrate:dev": "npx prisma migrate dev --schema=../database/prisma/schema.prisma --name",
+    "migrate:deploy": "npx prisma migrate deploy --schema=../database/prisma/schema.prisma --name",
+    "generate:prisma": "npx prisma generate --schema=../database/prisma/schema.prisma"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}

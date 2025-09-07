@@ -1,0 +1,14 @@
+{
+  "name": "@app/database",
+  "private": true,
+  "version": "1.0.0",
+  "main": "./index.ts",
+  "scripts": {},
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "exports": {
+    ".": "./index.ts"
+  }
+}

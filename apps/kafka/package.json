@@ -1,0 +1,19 @@
+{
+  "name": "@app/kafka",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "index.ts",
+  "scripts": {},
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "exports": {
+    ".": "./index.ts"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.2",
+    "kafkajs": "^2.2.4"
+  }
+}
