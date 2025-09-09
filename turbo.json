@@ -5,5 +5,29 @@
     "dev": { "cache": false, "persistent": true },
     "build": { "dependsOn": ["^build"], "outputs": ["dist/**"] }
   },
-  "globalEnv": ["DATABASE_URL", "REDIS_URL", "KAFKA_BROKERS"]
+  "globalEnv": [
+    "DATABASE_URL",
+    "REDIS_URL",
+    "KAFKA_BROKERS",
+    "BOT_TOKEN",
+    "OWNER_ID",
+    "REDIS_HOST",
+    "REDIS_PORT",
+    "KAFKA_ENABLE_KRAFT",
+    "KAFKA_CFG_NODE_ID",
+    "KAFKA_CFG_PROCESS_ROLES",
+    "KAFKA_CFG_LISTENERS",
+    "KAFKA_CFG_ADVERTISED_LISTENERS",
+    "KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP",
+    "KAFKA_CFG_CONTROLLER_QUORUM_VOTERS",
+    "KAFKA_CFG_CONTROLLER_LISTENER_NAMES",
+    "ALLOW_PLAINTEXT_LISTENER",
+    "INNER_KAFKA_PORT",
+    "OUTER_KAFKA_PORT",
+    "KAFKA_BROKERCONNECT",
+    "JVM_OPTS",
+    "SERVER_SERVLET_CONTEXTPATH",
+    "OUTER_KAFKA_UI_PORT",
+    "INNER_KAFKA_UI_PORT"
+  ]
 }

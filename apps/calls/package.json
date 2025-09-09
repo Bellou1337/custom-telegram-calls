@@ -4,15 +4,16 @@
   "main": "main.ts",
   "type": "module",
   "scripts": {
-    "dev": "tsx watch main.ts",
-    "start": "tsx main.ts",
-    "build": "tsc"
+    "dev": "dotenv -e ../../.env -- tsx watch main.ts",
+    "start": "dotenv -e ../../.env -- tsx main.ts",
+    "build": "dotenv -e ../../.env -- tsc"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@app/kafka": "file:../kafka"
+    "@app/kafka": "file:../kafka",
+    "dotenv-cli": "^10.0.0"
   }
 }
