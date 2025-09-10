@@ -1,6 +1,4 @@
 import { InlineKeyboard } from "grammy";
 
-export const callUrl = new InlineKeyboard().text(
-  "Назад ⬅️",
-  "back-to-call-list"
-);
+export const callUrl = (url: string) =>
+  new InlineKeyboard().webApp("📞 Открыть звонок", url);

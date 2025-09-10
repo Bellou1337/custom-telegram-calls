@@ -258,13 +258,13 @@ export const setupCallHandler = async (bot: Bot) => {
       M.GENERATE_CALL_URL,
       {
         parse_mode: "HTML",
-        reply_markup: callUrl,
+        reply_markup: cancelCallKeyboard,
       }
     );
 
     await ctx.editMessageText(M.GENERATE_CALL_URL, {
       parse_mode: "HTML",
-      reply_markup: callUrl,
+      reply_markup: cancelCallKeyboard,
     });
 
     logger.info("Producing call event to Kafka");
@@ -307,20 +307,20 @@ export const setupCallHandler = async (bot: Bot) => {
         await bot.api.editMessageText(
           Number(callerState!.chatId),
           Number(callerState!.messageId),
-          M.CALL_URL(data.telegramUrl),
+          M.CALL_URL,
           {
             parse_mode: "HTML",
-            reply_markup: callUrl,
+            reply_markup: callUrl(data.telegramUrl),
           }
         );
 
         await bot.api.editMessageText(
           Number(calleeState!.chatId),
           Number(calleeState!.messageId),
-          M.CALL_URL(data.telegramUrl),
+          M.CALL_URL,
           {
             parse_mode: "HTML",
-            reply_markup: callUrl,
+            reply_markup: callUrl(data.telegramUrl),
           }
         );
       } catch (error) {

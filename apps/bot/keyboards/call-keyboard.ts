@@ -7,7 +7,7 @@ export const userIsBusyKeyboard = new InlineKeyboard().text(
 
 export const acceptOrDeclineKeyboard = (fromId: string, toId: string) =>
   new InlineKeyboard()
-    .text("Принять ✅", `accept-call:${fromId}:${toId}`)
+    .webApp("Принять ✅", `accept-call:${fromId}:${toId}`)
     .text("Отклонить ❌", `decline-call:${fromId}:${toId}`);
 
 export const cancelCallKeyboard = new InlineKeyboard().text(
