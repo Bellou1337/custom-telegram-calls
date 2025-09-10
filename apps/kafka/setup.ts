@@ -6,6 +6,7 @@ const KAFKA_BROKERS = process.env.KAFKA_BROKERS!;
 
 export const TOPICS = {
   CALL_EVENTS: "call-events",
+  CALL_URLS: "call-urls",
 } as const;
 
 const kafka = new Kafka({
@@ -23,19 +24,19 @@ export const producer = kafka.producer({
   idempotent: true,
 });
 
-export const consumer = kafka.consumer({
-  groupId: "custom-telegram-calls-group",
-  sessionTimeout: 30000,
-  rebalanceTimeout: 60000,
-  heartbeatInterval: 3000,
-});
+export const createConsumer = (groupId: string) =>
+  kafka.consumer({
+    groupId: groupId,
+    sessionTimeout: 30000,
+    rebalanceTimeout: 60000,
+    heartbeatInterval: 3000,
+  });
 
 const admin = kafka.admin();
 
 export const initKafka = async () => {
   logger.info("Connecting to Kafka...");
   await producer.connect();
-  await consumer.connect();
 
   logger.info("Connected to Kafka successfully");
   await createTopics();
@@ -63,9 +64,4 @@ const createTopics = async () => {
 
   logger.info("Kafka topics are ready.");
   await admin.disconnect();
-};
-
-export const disconnectKafka = async () => {
-  await producer.disconnect();
-  await consumer.disconnect();
 };

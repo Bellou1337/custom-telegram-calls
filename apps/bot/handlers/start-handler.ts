@@ -40,6 +40,8 @@ export const setupStartHandler = async (bot: Bot) => {
     logger.info(`Creating user: ${JSON.stringify(userData)}`);
     userService.createUser(userData);
 
+    await bot.api.deleteMessage(ctx.chatId!, ctx.msgId!);
+
     ctx.reply(M.START, {
       parse_mode: "HTML",
       reply_markup: startKeyboard,

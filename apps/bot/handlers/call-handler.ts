@@ -10,12 +10,16 @@ import {
   notifyOkKeyboard,
 } from "../keyboards";
 import { generateCallListMenu } from "./user-profile-handler";
-import { producer, TOPICS } from "@app/kafka";
+import { producer, TOPICS, createConsumer } from "@app/kafka";
+import { callUrl } from "../keyboards/call-url";
 
 const callTimers = new Map<string, NodeJS.Timeout>();
 
 export const setupCallHandler = async (bot: Bot) => {
   const notifyService = new NotifyService(bot);
+  const callUrlsConsumer = createConsumer("call-urls-consumer");
+  callUrlsConsumer.connect();
+
   bot.callbackQuery(/^call_friends_page_(\d+)$/, async (ctx) => {
     const page = Number(ctx.match[1]);
     const paginator = await generatePaginator(ctx);
@@ -235,6 +239,34 @@ export const setupCallHandler = async (bot: Bot) => {
       callTimers.get(`${ctx.match[1]}:${ctx.from?.id}`) as NodeJS.Timeout
     );
 
+    const msg = ctx.callbackQuery?.message;
+    await redisClient.setState(
+      redisClient.REDIS_KEYS.USER_STATE(ctx.from!.id.toString()),
+      {
+        chatId: msg?.chat?.id,
+        messageId: msg?.message_id,
+      }
+    );
+
+    const callerState = await redisClient.getState(
+      redisClient.REDIS_KEYS.USER_STATE(ctx.match[1]?.toString() || "")
+    );
+
+    await bot.api.editMessageText(
+      Number(callerState?.chatId),
+      Number(callerState?.messageId),
+      M.GENERATE_CALL_URL,
+      {
+        parse_mode: "HTML",
+        reply_markup: callUrl,
+      }
+    );
+
+    await ctx.editMessageText(M.GENERATE_CALL_URL, {
+      parse_mode: "HTML",
+      reply_markup: callUrl,
+    });
+
     logger.info("Producing call event to Kafka");
     await producer.send({
       topic: TOPICS.CALL_EVENTS,
@@ -250,5 +282,54 @@ export const setupCallHandler = async (bot: Bot) => {
         },
       ],
     });
+  });
+
+  await callUrlsConsumer.subscribe({
+    topics: [TOPICS.CALL_URLS],
+    fromBeginning: true,
+  });
+
+  await callUrlsConsumer.run({
+    eachMessage: async ({ topic, partition, message }) => {
+      try {
+        const data = JSON.parse(message.value?.toString() || "{}");
+        logger.info(`Get telegram url: ${data?.telegramUrl}`);
+
+        const callerState = await redisClient.getState(
+          redisClient.REDIS_KEYS.USER_STATE(data.callerId)
+        );
+        const calleeState = await redisClient.getState(
+          redisClient.REDIS_KEYS.USER_STATE(data.calleeId)
+        );
+
+        console.log(data);
+
+        await bot.api.editMessageText(
+          Number(callerState!.chatId),
+          Number(callerState!.messageId),
+          M.CALL_URL(data.telegramUrl),
+          {
+            parse_mode: "HTML",
+            reply_markup: callUrl,
+          }
+        );
+
+        await bot.api.editMessageText(
+          Number(calleeState!.chatId),
+          Number(calleeState!.messageId),
+          M.CALL_URL(data.telegramUrl),
+          {
+            parse_mode: "HTML",
+            reply_markup: callUrl,
+          }
+        );
+      } catch (error) {
+        logger.error(
+          `Error processing message in topic ${topic}, partition ${partition}: ${
+            (error as Error).message
+          }`
+        );
+      }
+    },
   });
 };

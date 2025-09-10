@@ -1,1 +1,1 @@
-export { TOPICS, producer, consumer, initKafka } from "./setup";
+export { TOPICS, producer, createConsumer, initKafka } from "./setup";
