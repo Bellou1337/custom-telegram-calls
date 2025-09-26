@@ -69,28 +69,34 @@ export const generateFriendsMenu = async (ctx: Context) => {
   });
 };
 
-export const generateCallListMenu = async (ctx: Context) => {
-  logger.info(`User ${ctx.from?.id} pressed call button`);
-  await ctx.answerCallbackQuery();
+export const generateCallListMenu = async (ctx?: Context) => {
+  if (ctx) {
+    logger.info(`User ${ctx.from?.id} pressed call button`);
+    await ctx.answerCallbackQuery();
 
-  logger.info(`Set state ${STATES.CALL_LIST} for ${ctx.from?.id}`);
-  await redisClient.setState(
-    redisClient.REDIS_KEYS.USER_STATE(String(ctx.from?.id)),
-    {
-      state: STATES.CALL_LIST,
-    },
-    "STATE"
-  );
+    logger.info(`Set state ${STATES.CALL_LIST} for ${ctx.from?.id}`);
+    await redisClient.setState(
+      redisClient.REDIS_KEYS.USER_STATE(String(ctx.from?.id)),
+      {
+        state: STATES.CALL_LIST,
+      },
+      "STATE"
+    );
 
-  logger.info(`Generating call list for user ${ctx.from?.id}`);
+    logger.info(`Generating call list for user ${ctx.from?.id}`);
 
-  const paginator = await generatePaginator(ctx);
-  paginator.setPage(1);
+    const paginator = await generatePaginator(ctx);
+    paginator.setPage(1);
 
-  await ctx.editMessageText(paginator.renderCallList(), {
-    parse_mode: "HTML",
-    reply_markup: paginator.getCallListKeyboard(),
-  });
+    await ctx.editMessageText(paginator.renderCallList(), {
+      parse_mode: "HTML",
+      reply_markup: paginator.getCallListKeyboard(),
+    });
+  } else {
+    logger.info(`Generating call list without context`);
+
+    
+  }
 };
 
 export const backToProfile = async (ctx: Context) => {

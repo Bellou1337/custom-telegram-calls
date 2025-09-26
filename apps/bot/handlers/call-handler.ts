@@ -8,17 +8,20 @@ import {
   acceptOrDeclineKeyboard,
   cancelCallKeyboard,
   notifyOkKeyboard,
+  callEndedKeyboard,
 } from "../keyboards";
 import { generateCallListMenu } from "./user-profile-handler";
 import { producer, TOPICS, createConsumer } from "@app/kafka";
-import { callUrl } from "../keyboards/call-url";
+import { callUrl } from "../keyboards/call-keyboard";
 
 const callTimers = new Map<string, NodeJS.Timeout>();
 
 export const setupCallHandler = async (bot: Bot) => {
   const notifyService = new NotifyService(bot);
   const callUrlsConsumer = createConsumer("call-urls-consumer");
+  const userCommandsConsumer = createConsumer("user-commands-consumer");
   callUrlsConsumer.connect();
+  userCommandsConsumer.connect();
 
   bot.callbackQuery(/^call_friends_page_(\d+)$/, async (ctx) => {
     const page = Number(ctx.match[1]);
@@ -267,6 +270,9 @@ export const setupCallHandler = async (bot: Bot) => {
       reply_markup: cancelCallKeyboard,
     });
 
+    logger.info(`Update for user: ${ctx.from?.id} status to BUSY`);
+    await userService.updateUserStatus(ctx.from?.id.toString() || "", "BUSY");
+
     logger.info("Producing call event to Kafka");
     await producer.send({
       topic: TOPICS.CALL_EVENTS,
@@ -287,6 +293,53 @@ export const setupCallHandler = async (bot: Bot) => {
   await callUrlsConsumer.subscribe({
     topics: [TOPICS.CALL_URLS],
     fromBeginning: true,
+  });
+
+  await userCommandsConsumer.subscribe({
+    topics: [TOPICS.USER_COMMANDS],
+    fromBeginning: false,
+  });
+
+  await userCommandsConsumer.run({
+    eachMessage: async ({ topic, partition, message }) => {
+      try {
+        const data = JSON.parse(message.value?.toString() || "{}");
+        logger.info(`Received user command event: ${JSON.stringify(data)}`);
+
+        if (data.type === "UPDATE_USER_STATUS") {
+          logger.info(
+            `Updating status for user ${data.userId} to ${data.status}`
+          );
+
+          await userService.updateUserStatus(
+            data.userId.toString(),
+            data.status
+          );
+        }
+
+        if (data.reason === "MINIAPP_CLOSED") {
+          const state = await redisClient.getState(
+            redisClient.REDIS_KEYS.USER_STATE(String(data.userId))
+          );
+
+          await bot.api.editMessageText(
+            Number(state?.chatId),
+            Number(state?.messageId),
+            M.CALL_ENDED,
+            {
+              parse_mode: "HTML",
+              reply_markup: callEndedKeyboard,
+            }
+          );
+        }
+      } catch (error) {
+        logger.error(
+          `Error processing message in topic ${topic}, partition ${partition}: ${
+            (error as Error).message
+          }`
+        );
+      }
+    },
   });
 
   await callUrlsConsumer.run({

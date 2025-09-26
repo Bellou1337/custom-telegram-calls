@@ -8,6 +8,8 @@
     "types": ["node"],
     "lib": ["esnext"],
 
+    "allowSyntheticDefaultImports": true,
+
     "sourceMap": true,
 
     "noUncheckedIndexedAccess": true,

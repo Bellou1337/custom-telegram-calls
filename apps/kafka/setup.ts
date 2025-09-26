@@ -7,6 +7,8 @@ const KAFKA_BROKERS = process.env.KAFKA_BROKERS!;
 export const TOPICS = {
   CALL_EVENTS: "call-events",
   CALL_URLS: "call-urls",
+  CALL_STATUS: "call-status",
+  USER_COMMANDS: "user-commands",
 } as const;
 
 const kafka = new Kafka({

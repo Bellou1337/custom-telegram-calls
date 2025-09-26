@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Voice Call - Custom Telegram Calls</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="/css/style.css" />
+  </head>
+  <body>
+    <div class="call-container">
+      <h2>🎤 Голосовой звонок</h2>
+
+      <div class="status waiting" id="status">Ожидание собеседника...</div>
+
+      <div class="user-info">
+        <p><strong>Комната:</strong> <span id="room-id">Загрузка...</span></p>
+        <p>
+          <strong>Пользователь:</strong> <span id="user-id">Загрузка...</span>
+        </p>
+      </div>
+
+      <div class="controls">
+        <button id="end-call" class="end-call">❌ Завершить звонок</button>
+        <button id="mute-btn" class="mute-btn">🔇 Выключить микрофон</button>
+      </div>
+
+      <audio id="local-audio" muted autoplay playsinline></audio>
+      <audio id="remote-audio" autoplay playsinline></audio>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/ui.js"></script>
+    <script src="/js/socket-handler.js"></script>
+    <script src="/js/webrtc.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", async () => {
+        const roomId = window.location.pathname.split("/")[2];
+        const tg = window.Telegram?.WebApp;
+        const userId =
+          tg?.initDataUnsafe?.user?.id || `test-user-${Date.now()}`;
+
+        document.getElementById("room-id").textContent = roomId;
+        document.getElementById("user-id").textContent = userId;
+
+        UI.init();
+        SocketHandler.init(roomId, userId);
+
+        if (tg) {
+          tg.ready();
+          tg.expand();
+          if (tg.requestMicrophoneAccess) {
+            const { granted } = await tg.requestMicrophoneAccess();
+            if (!granted) {
+              UI.showError("Дайте доступ к микрофону в Telegram");
+              return;
+            }
+          }
+        }
+
+        await window.webRTC.autoStartCall();
+
+        window.addEventListener("beforeunload", () => {
+          if (window.webRTC?.peerConnection) {
+            window.webRTC.endCall();
+          }
+        });
+      });
+    </script>
+  </body>
+</html>
